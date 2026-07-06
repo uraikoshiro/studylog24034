@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最強勉強ログ - StudyLog Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        <h2>🚀 StudyLog Pro</h2>
+        
+        <div class="tabs">
+            <button id="tabPomodoro" class="tab-btn active">ポモドーロ</button>
+            <button id="tabCustom" class="tab-btn">カスタム</button>
+            <button id="tabStopwatch" class="tab-btn">ストップウォッチ</button>
+        </div>
+
+        <div id="pomoArea" class="mode-area">
+            <div id="statusLabel" class="status-label focus">🔥 集中時間 (25:00)</div>
+            <div class="display" id="pomoDisplay">25:00</div>
+            <div class="button-group">
+                <button id="pomoStart" class="btn start">スタート</button>
+                <button id="pomoStop" class="btn stop">ストップ</button>
+                <button id="pomoReset" class="btn reset">リセット</button>
+            </div>
+        </div>
+
+        <div id="customArea" class="mode-area hidden">
+            <div class="input-group">
+                <input type="number" id="inputMin" min="0" max="180" value="10"> 分
+                <input type="number" id="inputSec" min="0" max="59" value="0"> 秒
+                <button id="setTimeBtn" class="btn set-btn">設定</button>
+            </div>
+            <div class="display" id="customDisplay">10:00</div>
+            <div class="button-group">
+                <button id="customStart" class="btn start">スタート</button>
+                <button id="customStop" class="btn stop">ストップ</button>
+                <button id="customReset" class="btn reset">リセット</button>
+            </div>
+        </div>
+
+        <div id="swArea" class="mode-area hidden">
+            <div class="status-label focus">⏱️ カウントアップ中</div>
+            <div class="display" id="swDisplay">00:00:00</div>
+            <div class="button-group">
+                <button id="swStart" class="btn start">スタート</button>
+                <button id="swStop" class="btn stop">ストップ</button>
+                <button id="swReset" class="btn reset">リセット</button>
+            </div>
+        </div>
+
+        <button id="saveLogBtn" class="btn save-btn">📝 ここまでの勉強時間を記録する</button>
+
+        <hr>
+
+        <div class="total-area">
+            <h3>📊 今日の合計勉強時間</h3>
+            <div id="totalDisplay" class="total-time">00時間 00分 00秒</div>
+        </div>
+
+        <hr>
+
+        <div class="chart-area">
+            <h3>📈 直近7日間の勉強時間（分）</h3>
+            <canvas id="studyChart"></canvas>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
