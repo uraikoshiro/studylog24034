@@ -1,9 +1,9 @@
 // ==========================================
 // 1. 状態管理の変数
 // ==========================================
-let currentMode = 'pomodoro'; // 'pomodoro', 'custom', 'stopwatch'
-let timerId = null;           // すべてのモードで共通のタイマーID
-let studySecondsCount = 0;    // ★すべてのモードで勉強した秒数をここにためる
+let currentMode = 'pomodoro'; 
+let timerId = null;           
+let studySecondsCount = 0;    
 
 // ポモドーロ用
 const POMO_FOCUS = 25 * 60;
@@ -12,7 +12,7 @@ let pomoTimeLeft = POMO_FOCUS;
 let isPomoFocus = true;
 
 // カスタム用
-let customTimeLeft = 10 * 60; // 初期値10分
+let customTimeLeft = 10 * 60; 
 
 // ストップウォッチ用
 let swSeconds = 0;
@@ -29,7 +29,48 @@ const statusLabel = document.getElementById('statusLabel');
 const totalDisplay = document.getElementById('totalDisplay');
 
 // ==========================================
-// 2. タブ切り替え処理
+// 2. 【新機能】通知のコントロール処理
+// ==========================================
+const notifyBtn = document.getElementById('enableNotificationBtn');
+
+// ページを開いたときにすでに許可されているか確認する
+function checkNotificationPermission() {
+    if (!("Notification" in window)) {
+        notifyBtn.textContent = "❌ このブラウザは通知に非対応です";
+        return;
+    }
+    if (Notification.permission === "granted") {
+        notifyBtn.style.display = "none"; // 許可済みならボタンを隠す
+    }
+}
+
+// ボタンを押したときに許可を求める
+notifyBtn.addEventListener('click', () => {
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            alert("通知が許可されました！タイマー終了時にお知らせします。");
+            notifyBtn.style.display = "none";
+            // テスト通知を送ってみる
+            sendNotification("📢 テスト通知", "通知機能はバッチ有効!!");
+        } else {
+            alert("通知が拒否されました。設定から変更できます。");
+        }
+    });
+});
+
+// スマホの画面に通知を送る共通の関数
+function sendNotification(title, message) {
+    if (Notification.permission === "granted") {
+        new Notification(title, {
+            body: message,
+            // アプリっぽいアイコンをつけたい場合はここに画像のURLを指定できます
+            icon: "https://cdn-icons-png.flaticon.com/512/854/854881.png" 
+        });
+    }
+}
+
+// ==========================================
+// 3. タブ切り替え処理
 // ==========================================
 const tabs = {
     pomodoro: { btn: document.getElementById('tabPomodoro'), area: document.getElementById('pomoArea') },
@@ -38,11 +79,9 @@ const tabs = {
 };
 
 function switchMode(modeName) {
-    // タイマーが動いていたら止める
     stopAllTimers();
     currentMode = modeName;
 
-    // 見た目の切り替え
     Object.keys(tabs).forEach(key => {
         if (key === modeName) {
             tabs[key].btn.classList.add('active');
@@ -59,7 +98,7 @@ tabs.custom.btn.addEventListener('click', () => switchMode('custom'));
 tabs.stopwatch.btn.addEventListener('click', () => switchMode('stopwatch'));
 
 // ==========================================
-// 3. 各種タイマーの表示更新関数
+// 4. 表示更新・フォーマット関数
 // ==========================================
 function formatMinSec(seconds) {
     let m = Math.floor(seconds / 60);
@@ -82,28 +121,45 @@ function formatTotalTimeText(totalSeconds) {
 }
 
 // ==========================================
-// 4. メインタイマー制御（心臓部）
+// 5. メインタイマー制御
 // ==========================================
-function startTimer(tickFunction) {
-    if (timerId !== null) return;
-    timerId = setInterval(tickFunction, 1000);
-}
-
 function stopAllTimers() {
     clearInterval(timerId);
     timerId = null;
+    localStorage.removeItem('timer_start_time');
+    localStorage.removeItem('timer_mode');
 }
 
-// --- ポモドーロの動き ---
+// --- ポモドーロタイマー ---
 document.getElementById('pomoStart').addEventListener('click', () => {
-    startTimer(() => {
+    if (timerId !== null) return;
+    
+    if (!localStorage.getItem('timer_start_time')) {
+        localStorage.setItem('timer_start_time', Date.now());
+        localStorage.setItem('timer_mode', 'pomodoro');
+    }
+
+    const baseTimeLeft = pomoTimeLeft;
+    const baseStudyCount = studySecondsCount;
+
+    timerId = setInterval(() => {
+        const startTime = parseInt(localStorage.getItem('timer_start_time'), 10);
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+        pomoTimeLeft = baseTimeLeft - elapsedSeconds;
+        
+        if (isPomoFocus) {
+            studySecondsCount = baseStudyCount + elapsedSeconds;
+        }
+
         if (pomoTimeLeft > 0) {
-            pomoTimeLeft--;
-            if (isPomoFocus) studySecondsCount++; // 集中時のみ勉強時間をカウント
             pomoDisplay.textContent = formatMinSec(pomoTimeLeft);
         } else {
             stopAllTimers();
             if (isPomoFocus) {
+                // 🔽 【新機能】終了時にスマホに通知を送る
+                sendNotification("🔥 集中終了！", "25分間よく頑張りました！5分間の休憩に入りましょう。");
+                
                 alert('集中時間終了！データを記録して休憩します。');
                 saveStudyTime(studySecondsCount);
                 studySecondsCount = 0;
@@ -112,6 +168,9 @@ document.getElementById('pomoStart').addEventListener('click', () => {
                 statusLabel.textContent = "☕ 休憩時間 (5:00)";
                 statusLabel.className = "status-label break";
             } else {
+                // 🔽 【新機能】休憩終了時も通知
+                sendNotification("☕ 休憩終了！", "休憩が終わりました。次の25分集中をはじめましょう！");
+                
                 alert('休憩終了！次の集中を始めましょう。');
                 isPomoFocus = true;
                 pomoTimeLeft = POMO_FOCUS;
@@ -120,8 +179,9 @@ document.getElementById('pomoStart').addEventListener('click', () => {
             }
             pomoDisplay.textContent = formatMinSec(pomoTimeLeft);
         }
-    });
+    }, 1000);
 });
+
 document.getElementById('pomoStop').addEventListener('click', stopAllTimers);
 document.getElementById('pomoReset').addEventListener('click', () => {
     stopAllTimers();
@@ -133,7 +193,7 @@ document.getElementById('pomoReset').addEventListener('click', () => {
     pomoDisplay.textContent = formatMinSec(pomoTimeLeft);
 });
 
-// --- カスタムタイマーの動き ---
+// --- カスタムタイマー ---
 document.getElementById('setTimeBtn').addEventListener('click', () => {
     stopAllTimers();
     const min = parseInt(document.getElementById('inputMin').value, 10) || 0;
@@ -143,34 +203,68 @@ document.getElementById('setTimeBtn').addEventListener('click', () => {
 });
 
 document.getElementById('customStart').addEventListener('click', () => {
-    startTimer(() => {
+    if (timerId !== null) return;
+
+    if (!localStorage.getItem('timer_start_time')) {
+        localStorage.setItem('timer_start_time', Date.now());
+        localStorage.setItem('timer_mode', 'custom');
+    }
+
+    const baseTimeLeft = customTimeLeft;
+    const baseStudyCount = studySecondsCount;
+
+    timerId = setInterval(() => {
+        const startTime = parseInt(localStorage.getItem('timer_start_time'), 10);
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+        customTimeLeft = baseTimeLeft - elapsedSeconds;
+        studySecondsCount = baseStudyCount + elapsedSeconds;
+
         if (customTimeLeft > 0) {
-            customTimeLeft--;
-            studySecondsCount++; // カスタムタイマーはすべて勉強時間としてカウント
             customDisplay.textContent = formatMinSec(customTimeLeft);
         } else {
             stopAllTimers();
+            
+            // 🔽 【新機能】カスタムタイマー終了通知
+            sendNotification("⏱️ タイマー終了！", "設定した時間が経過しました！");
+
             alert('設定した時間が経過しました！');
             saveStudyTime(studySecondsCount);
             studySecondsCount = 0;
+            customTimeLeft = 0;
+            customDisplay.textContent = formatMinSec(0);
         }
-    });
+    }, 1000);
 });
 document.getElementById('customStop').addEventListener('click', stopAllTimers);
 document.getElementById('customReset').addEventListener('click', () => {
     stopAllTimers();
     studySecondsCount = 0;
-    customTimeLeft = 10 * 60; // 10分に戻す
+    customTimeLeft = 10 * 60; 
     customDisplay.textContent = formatMinSec(customTimeLeft);
 });
 
-// --- ストップウォッチの動き ---
+// --- ストップウォッチ ---
 document.getElementById('swStart').addEventListener('click', () => {
-    startTimer(() => {
-        swSeconds++;
-        studySecondsCount++; // ストップウォッチ中も勉強時間としてカウント
+    if (timerId !== null) return;
+
+    if (!localStorage.getItem('timer_start_time')) {
+        localStorage.setItem('timer_start_time', Date.now());
+        localStorage.setItem('timer_mode', 'stopwatch');
+    }
+
+    const baseSwSeconds = swSeconds;
+    const baseStudyCount = studySecondsCount;
+
+    timerId = setInterval(() => {
+        const startTime = parseInt(localStorage.getItem('timer_start_time'), 10);
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+        swSeconds = baseSwSeconds + elapsedSeconds;
+        studySecondsCount = baseStudyCount + elapsedSeconds;
+
         swDisplay.textContent = formatFullTime(swSeconds);
-    });
+    }, 1000);
 });
 document.getElementById('swStop').addEventListener('click', stopAllTimers);
 document.getElementById('swReset').addEventListener('click', () => {
@@ -181,7 +275,22 @@ document.getElementById('swReset').addEventListener('click', () => {
 });
 
 // ==========================================
-// 5. 共通の記録・保存・グラフ処理
+// 6. アプリが再び開かれたときに同期する処理
+// ==========================================
+function checkBackgroundTimer() {
+    const startTime = localStorage.getItem('timer_start_time');
+    const savedMode = localStorage.getItem('timer_mode');
+
+    if (startTime && savedMode) {
+        switchMode(savedMode);
+        if (savedMode === 'pomodoro') document.getElementById('pomoStart').click();
+        if (savedMode === 'custom') document.getElementById('customStart').click();
+        if (savedMode === 'stopwatch') document.getElementById('swStart').click();
+    }
+}
+
+// ==========================================
+// 7. 共通の記録・保存・グラフ処理
 // ==========================================
 const saveLogBtn = document.getElementById('saveLogBtn');
 saveLogBtn.addEventListener('click', () => {
@@ -191,14 +300,13 @@ saveLogBtn.addEventListener('click', () => {
     }
     saveStudyTime(studySecondsCount);
     alert(`${Math.floor(studySecondsCount / 60)}分${studySecondsCount % 60}秒を記録しました！`);
-    studySecondsCount = 0; 
     
-    // ストップウォッチモードの時だけ、画面上の表示と内部の計測をリセットする
+    studySecondsCount = 0; 
     if (currentMode === 'stopwatch') {
         swSeconds = 0;
         swDisplay.textContent = formatFullTime(0);
-        stopAllTimers();
     }
+    stopAllTimers();
 });
 
 function saveStudyTime(seconds) {
@@ -209,7 +317,6 @@ function saveStudyTime(seconds) {
     updateChart();
 }
 
-// グラフ描画 (前回と同様)
 function updateChart() {
     const ctx = document.getElementById('studyChart').getContext('2d');
     const labels = [];
@@ -219,7 +326,7 @@ function updateChart() {
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
         labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
-        const savedTime = localStorage.getItem(`study_${studySecondsCount, dateStr}`) || 0;
+        const savedTime = localStorage.getItem(`study_${dateStr}`) || 0;
         const minutes = Math.round((parseInt(savedTime, 10) / 60) * 10) / 10;
         data.push(minutes);
     }
@@ -248,6 +355,10 @@ function loadTotalTime() {
     else { totalStudyTime = 0; }
     totalDisplay.textContent = formatTotalTimeText(totalStudyTime);
     updateChart();
+    
+    checkBackgroundTimer();
+    // 🔽 【新機能】起動時に通知の状態をチェック
+    checkNotificationPermission();
 }
 
 loadTotalTime();
