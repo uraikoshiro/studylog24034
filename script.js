@@ -21,14 +21,22 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 // 4. スマホ一台一台の「固有の住所（トークン）」を発行してコンソールに表示する関数
+// 🔄 script.js の「requestPushToken」関数をこの塊に丸ごと置き換えてください
+
 function requestPushToken() {
     // ユーザーに通知の許可を求める
     Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
             console.log('通知の許可をゲット！住所（トークン）を発行します...');
             
-            // Firebaseに「このスマホの住所を頂戴！」とお願いする
-            getToken(messaging, { serviceWorkerRegistration: registration, vapidKey: 'BNdB3Xq99cqoee4mKwjaoqcKZyH1u6s24UKsr2jseIW0XT5276_T-7u5fqElQx8WWnwlF_03TKmgD5H4I_km67w' })
+            // 🔽 ここで「裏方（Service Worker）の準備完了」を待ち、その情報を「registration」という名前で受け取ります
+            navigator.serviceWorker.ready.then((registration) => {
+
+                // 枠組みの中で初めて「registration」が使えるようになります！
+                getToken(messaging, { 
+                    serviceWorkerRegistration: registration,
+                    vapidKey: 'BNdB3Xq99cqoee4mKwjaoqcKZyH1u6s24UKsr2jseIW0XT5276_T-7u5fqElQx8WWnwlF_03TKmgD5H4I_km67w'
+                })
                 .then((currentToken) => {
                     if (currentToken) {
                         // 🚀 これがプッシュ通知に絶対必要な「あなたのスマホの住所」です！
@@ -41,6 +49,8 @@ function requestPushToken() {
                 }).catch((err) => {
                     console.error('トークン取得エラー：', err);
                 });
+
+            }); // navigator.serviceWorker.ready の閉じ
         }
     });
 }
