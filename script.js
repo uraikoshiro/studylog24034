@@ -59,9 +59,8 @@ notifyBtn.addEventListener('click', () => {
 });
 
 // スマホの画面に通知を送る共通の関数
-// 🔄 ここを丸ごと差し替えてください
+// 🔄 script.js の中にある sendNotification をこれに丸ごと差し替えてください
 function sendNotification(title, message) {
-    // try { ... } の中でエラーが起きても、catch が衝撃を吸収してくれます
     try {
         if (!("Notification" in window)) {
             console.log("このブラウザは通知に対応していません");
@@ -69,14 +68,21 @@ function sendNotification(title, message) {
         }
 
         if (Notification.permission === "granted") {
-            new Notification(title, {
-                body: message,
-                icon: "https://cdn-icons-png.flaticon.com/512/854/854881.png" 
-            });
+            // 🔽 通常の通知ではなく、裏方（Service Worker）から通知を強制発火させる
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(title, {
+                        body: message,
+                        icon: "https://cdn-icons-png.flaticon.com/512/854/854881.png"
+                    });
+                });
+            } else {
+                // 万が一裏方が準備できていない時のための予備
+                new Notification(title, { body: message });
+            }
         }
     } catch (error) {
-        // スマホで通知エラーが起きても、ここに逃がしてアプリのフリーズを防ぐ！
-        console.error("スマホの制限により通知の送信に失敗しました:", error);
+        console.error("通知の送信に失敗しました:", error);
     }
 }
 
@@ -370,6 +376,13 @@ function loadTotalTime() {
     checkBackgroundTimer();
     // 🔽 【新機能】起動時に通知の状態をチェック
     checkNotificationPermission();
+
+}
+// 🔽 script.js の一番最後に追加してください
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker 登録成功！', reg))
+        .catch(err => console.error('Service Worker 登録失敗...', err));
 }
 
 loadTotalTime();
