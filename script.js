@@ -28,7 +28,7 @@ function requestPushToken() {
             console.log('通知の許可をゲット！住所（トークン）を発行します...');
             
             // Firebaseに「このスマホの住所を頂戴！」とお願いする
-            getToken(messaging, { vapidKey: 'BNdB3Xq99cqoee4mKwjaoqcKZyH1u6s24UKsr2jseIW0XT5276_T-7u5fqElQx8WWnwlF_03TKmgD5H4I_km67w' })
+            getToken(messaging, { serviceWorkerRegistration: registration, vapidKey: 'BNdB3Xq99cqoee4mKwjaoqcKZyH1u6s24UKsr2jseIW0XT5276_T-7u5fqElQx8WWnwlF_03TKmgD5H4I_km67w' })
                 .then((currentToken) => {
                     if (currentToken) {
                         // 🚀 これがプッシュ通知に絶対必要な「あなたのスマホの住所」です！
