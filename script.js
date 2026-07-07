@@ -92,7 +92,7 @@ function checkNotificationPermission() {
         return;
     }
     if (Notification.permission === "granted") {
-        notifyBtn.style.display = "none"; // 許可済みならボタンを隠す
+        //notifyBtn.style.display = "none"; // 許可済みならボタンを隠す
     }
 }
 
@@ -101,7 +101,7 @@ notifyBtn.addEventListener('click', () => {
     Notification.requestPermission().then(permission => {
         if (permission === "granted") {
             alert("通知が許可されました！タイマー終了時にお知らせします。");
-            notifyBtn.style.display = "none";
+            //notifyBtn.style.display = "none";
             // テスト通知を送ってみる
             sendNotification("📢 テスト通知", "通知機能はバッチ有効!!");
         } else {
