@@ -59,13 +59,24 @@ notifyBtn.addEventListener('click', () => {
 });
 
 // スマホの画面に通知を送る共通の関数
+// 🔄 ここを丸ごと差し替えてください
 function sendNotification(title, message) {
-    if (Notification.permission === "granted") {
-        new Notification(title, {
-            body: message,
-            // アプリっぽいアイコンをつけたい場合はここに画像のURLを指定できます
-            icon: "https://cdn-icons-png.flaticon.com/512/854/854881.png" 
-        });
+    // try { ... } の中でエラーが起きても、catch が衝撃を吸収してくれます
+    try {
+        if (!("Notification" in window)) {
+            console.log("このブラウザは通知に対応していません");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            new Notification(title, {
+                body: message,
+                icon: "https://cdn-icons-png.flaticon.com/512/854/854881.png" 
+            });
+        }
+    } catch (error) {
+        // スマホで通知エラーが起きても、ここに逃がしてアプリのフリーズを防ぐ！
+        console.error("スマホの制限により通知の送信に失敗しました:", error);
     }
 }
 
