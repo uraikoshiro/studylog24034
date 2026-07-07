@@ -1,3 +1,55 @@
+// 📄 script.js の一番上（1行目）に貼り付け
+
+// 1. Firebaseの通知機能（Messaging）を取り込む
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+
+// 2. あなた専用の基地局の鍵（★ここにあなたのマイアプリの情報を貼り付けます★）
+const firebaseConfig = {
+    apiKey: "AIzaSyC1PPF9tfLrvVbS2C0b9VAOdCnel-ff9Dg",
+    authDomain: "studylog-18096.firebaseapp.com",
+    projectId: "studylog-18096",
+    storageBucket: "studylog-18096.firebasestorage.app",
+    messagingSenderId: "432615831404",
+    appId: "1:432615831404:web:ca39c4d32b057519412549",
+    measurementId: "G-FJK5HZNV0L"
+  };
+
+
+// 3. Firebaseの起動
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+// 4. スマホ一台一台の「固有の住所（トークン）」を発行してコンソールに表示する関数
+function requestPushToken() {
+    // ユーザーに通知の許可を求める
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+            console.log('通知の許可をゲット！住所（トークン）を発行します...');
+            
+            // Firebaseに「このスマホの住所を頂戴！」とお願いする
+            getToken(messaging, { vapidKey: 'BNdB3Xq99cqoee4mKwjaoqcKZyH1u6s24UKsr2jseIW0XT5276_T-7u5fqElQx8WWnwlF_03TKmgD5H4I_km67w' })
+                .then((currentToken) => {
+                    if (currentToken) {
+                        // 🚀 これがプッシュ通知に絶対必要な「あなたのスマホの住所」です！
+                        console.log('【大成功】あなたのスマホの住所（トークン）はこれです：');
+                        console.log(currentToken);
+                        alert("トークンを発行しました！開発者ツール（コンソール）を見てね！");
+                    } else {
+                        console.log('トークンが取得できませんでした。');
+                    }
+                }).catch((err) => {
+                    console.error('トークン取得エラー：', err);
+                });
+        }
+    });
+}
+
+// アプリ起動時に、上の関数を動かす（テスト用）
+// 以前作った notifyBtn のイベントリスナーの中に組み込んでもOKです！
+document.getElementById('enableNotificationBtn').addEventListener('click', requestPushToken);
+
+// === ここから下に、今までの既存のコードが続くようにします ===
 // ==========================================
 // 1. 状態管理の変数
 // ==========================================
