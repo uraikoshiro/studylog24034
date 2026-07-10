@@ -151,6 +151,37 @@ function sendNotification(title, message) {
         console.error("通知の送信に失敗しました:", error);
     }
 }
+// 🚀【新機能】パソコンのサーバーへ、未来の通知予約を送る関数
+function reserveServerNotification(durationSec) {
+    // 画面のテキストエリアから最新のトークンを取得
+    const token = document.getElementById('token-textarea').value; 
+    
+    // 🔴【重要】localtunnelで発行された「https://〜」のURLに書き換えてください
+    const serverUrl = 'https://XXXX.localtunnel.me/start-timer';
+
+    if (!token) {
+        console.log('トークンが空のため、サーバーへの予約をスキップしました。');
+        return;
+    }
+
+    fetch(serverUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: token,
+            durationSec: durationSec // サーバーに「◯秒後に鳴らして！」と伝える
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('サーバーがタイマーを受理しました！:', data);
+    })
+    .catch(error => {
+        console.error('サーバーへの通信に失敗しました:', error);
+    });
+}
 
 // ==========================================
 // 3. タブ切り替え処理
@@ -224,6 +255,7 @@ document.getElementById('pomoStart').addEventListener('click', () => {
 
     const baseTimeLeft = pomoTimeLeft;
     const baseStudyCount = studySecondsCount;
+    reserveServerNotification(pomoTimeLeft);
 
     timerId = setInterval(() => {
         const startTime = parseInt(localStorage.getItem('timer_start_time'), 10);
@@ -295,6 +327,7 @@ document.getElementById('customStart').addEventListener('click', () => {
 
     const baseTimeLeft = customTimeLeft;
     const baseStudyCount = studySecondsCount;
+    reserveServerNotification(customTimeLeft);
 
     timerId = setInterval(() => {
         const startTime = parseInt(localStorage.getItem('timer_start_time'), 10);
