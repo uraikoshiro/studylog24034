@@ -46,6 +46,10 @@ function requestPushToken() {
                     } else {
                         console.log('トークンが取得できませんでした。');
                     }
+                    if (currentToken) {
+  // 既存の処理に加えて、画面のテキストエリアにトークンを表示
+  document.getElementById('token-textarea').value = currentToken;
+}
                 }).catch((err) => {
                     console.error('トークン取得エラー：', err);
                 });
@@ -445,6 +449,12 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
         .then(reg => console.log('Service Worker 登録成功！', reg))
         .catch(err => console.error('Service Worker 登録失敗...', err));
+}
+function copyToken() {
+  const textarea = document.getElementById('token-textarea');
+  textarea.select();
+  document.execCommand('copy');
+  alert('トークンをコピーしました！');
 }
 
 loadTotalTime();
