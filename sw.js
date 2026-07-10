@@ -28,3 +28,8 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
 });
+
+// 📄 sw.js の一番下に追加（インストール許可をもらうための魔法）
+self.addEventListener('fetch', function(event) {
+    // ここは空っぽでも「通信を意識している」とブラウザが認めてくれます！
+});
