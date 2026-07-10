@@ -152,17 +152,25 @@ function sendNotification(title, message) {
     }
 }
 // 🚀【新機能】パソコンのサーバーへ、未来の通知予約を送る関数
+// 📄 script.js の reserveServerNotification をこれに差し替える
+
 function reserveServerNotification(durationSec) {
-    // 画面のテキストエリアから最新のトークンを取得
+    // 画面からトークンを取得
     const token = document.getElementById('token-textarea').value; 
     
-    // 🔴【重要】localtunnelで発行された「https://〜」のURLに書き換えてください
+    // 🚨【チェック1】関数が動いているか確認
+    alert('⏰ 通知予約関数が動き出しました！\nトークン: ' + (token ? '⭕入っています' : '❌空っぽです'));
+
+    // 🔴【超重要】ここがあなたの localtunnel の URL になっているか今一度確認！
+    // 末尾の「/start-timer」を消さないように注意してください。
     const serverUrl = 'https://XXXX.localtunnel.me/start-timer';
 
     if (!token) {
-        console.log('トークンが空のため、サーバーへの予約をスキップしました。');
+        alert('⚠️ トークンが空っぽなので、ここで処理を終了します。');
         return;
     }
+
+    alert('🚀 サーバーへ合図を送ります...\nURL: ' + serverUrl);
 
     fetch(serverUrl, {
         method: 'POST',
@@ -171,39 +179,21 @@ function reserveServerNotification(durationSec) {
         },
         body: JSON.stringify({
             token: token,
-            durationSec: durationSec // サーバーに「◯秒後に鳴らして！」と伝える
+            durationSec: durationSec
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        // 🚨【チェック2】サーバーから返事が来たか確認
+        alert('📩 サーバーから応答がありました！\nステータスコード: ' + response.status);
+        return response.json();
+    })
     .then(data => {
-        console.log('サーバーがタイマーを受理しました！:', data);
+        // 🚨【チェック3】通信が完全に成功したか確認
+        alert('✨ サーバー連携大成功！\n返事: ' + JSON.stringify(data));
     })
     .catch(error => {
-        console.error('サーバーへの通信に失敗しました:', error);
-    });
-}
-
-// ==========================================
-// 3. タブ切り替え処理
-// ==========================================
-const tabs = {
-    pomodoro: { btn: document.getElementById('tabPomodoro'), area: document.getElementById('pomoArea') },
-    custom: { btn: document.getElementById('tabCustom'), area: document.getElementById('customArea') },
-    stopwatch: { btn: document.getElementById('tabStopwatch'), area: document.getElementById('swArea') }
-};
-
-function switchMode(modeName) {
-    stopAllTimers();
-    currentMode = modeName;
-
-    Object.keys(tabs).forEach(key => {
-        if (key === modeName) {
-            tabs[key].btn.classList.add('active');
-            tabs[key].area.classList.remove('hidden');
-        } else {
-            tabs[key].btn.classList.remove('active');
-            tabs[key].area.classList.add('hidden');
-        }
+        // 🚨【チェック4】エラーが発生した場合の原因を表示
+        alert('❌ 通信エラーが発生しました！\n原因: ' + error.message);
     });
 }
 
