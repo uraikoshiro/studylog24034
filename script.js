@@ -163,7 +163,7 @@ function reserveServerNotification(durationSec) {
     alert('⏰ 通知予約関数が動き出しました！\nトークン: ' + (token ? '⭕入っています' : '❌空っぽです'));
 
     // 🔴 あなたの最新の localtunnel URL に書き換えてください
-    const serverUrl = 'https://fast-planes-pay.loca.lt/start-timer';
+    const serverUrl = 'https://eighty-planets-camp.loca.lt/start-timer';
 
     if (!token) {
         alert('⚠️ トークンが空っぽなので、ここで処理を終了します。');
