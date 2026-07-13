@@ -163,7 +163,7 @@ function reserveServerNotification(durationSec) {
 
     // 🔴【超重要】ここがあなたの localtunnel の URL になっているか今一度確認！
     // 末尾の「/start-timer」を消さないように注意してください。
-    const serverUrl = 'https://loud-boxes-doubt.loca.lt/start-timer';
+    const serverUrl = 'https://sharp-colts-love.loca.lt/start-timer';
 
     if (!token) {
         alert('⚠️ トークンが空っぽなので、ここで処理を終了します。');
