@@ -56,4 +56,17 @@ app.listen(PORT, () => {
   console.log(` 🌐 タイマー受付サーバーが起動しました！`);
   console.log(` パソコンは【ポート ${PORT}】でスマホからの合図を待っています...`);
   console.log('==================================================');
+  
+});
+app.use((req, res, next) => {
+    // すべてのサイト（GitHub Pagesなど）からのアクセスを許可するよ！という設定
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    
+    // ボタンを押したときに発生する「事前確認通信（OPTIONS）」をパスさせる設定
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
 });
