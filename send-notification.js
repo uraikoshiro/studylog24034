@@ -1,41 +1,59 @@
-// 📄 send-notification.js（最新バージョン対応版）
+// 📄 send-notification.js（待ち受けサーバー版）
 
-// 最新版のFirebaseは、必要な機能だけをピンポイントで呼び出します
+const express = require('express');
+const cors = require('cors');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getMessaging } = require('firebase-admin/messaging');
 const serviceAccount = require('./serviceAccountKey.json');
 
-// 1. Firebaseの管理者権限を初期化（最新のスタイル）
+// 1. Firebaseの初期化
 initializeApp({
   credential: cert(serviceAccount)
-})
+});
 
-// 2. さきほどコピーした、あなたのパソコン（ブラウザ）の住所（FCMトークン）
-const registrationToken = 'dA8-6s4_NPZCrpXIWlzd_0:APA91bFVwaATf3ZL9OraswDcJwfMoVven7NVOOyU917kpJewcLL2gV9aACxRM2IRqtARvVOWNX4nOGb8pADl7B2oAkE6fJdfbU6e1qQQ1EnenGr-A1SSqck';
+const app = express();
+app.use(cors());          // スマホ（別のURL）からの通信を許可する魔法
+app.use(express.json());  // スマホから送られてくるデータ（JSON）を読めるようにする
 
-// 3. 送信する通知メッセージの内容
-const message = {
-  notification: {
-    title: '⏰ 【実験成功】時限式プッシュ通知！',
-    body: '10秒間の居眠り（スリープ）から覚めました！大成功ですワン！'
-  },
-  token: registrationToken
-};
+// 2. スマホからの「タイマー開始」の合図を受け取る窓口（API）を作る
+app.post('/start-timer', (req, res) => {
+  // スマホから送られてきた「住所（トークン）」と「測りたい秒数」を受け取る
+  const { token, durationSec } = req.body;
 
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log(' ⏳ 10秒タイマースタート！');
-console.log(' アプリのタブを裏側に隠すか、別の作業をして待ね...');
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(` ⏳ タイマー予約を受付ました！`);
+  console.log(` 【${durationSec}秒後】に通知を発射します。`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-// 4. 10秒（10000ミリ秒）後にFirebaseへ発射命令を出します！
-setTimeout(() => {
-  getMessaging().send(message)
-    .then((response) => {
-      console.log('🚀 【大成功】サーバーから電波を発射しました！');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('❌ 送信エラーが発生しました:', error);
-      process.exit(1);
-    });
-}, 10000);
+  // スマホには「了解！預かったよ！」と先に返事をしておく（これでスマホは通信を終えて眠れる）
+  res.status(200).json({ status: 'ok', message: 'Timer registered on server.' });
+
+  // 3. サーバーの裏側で、指定された秒数（ミリ秒に変換）だけじっと待つ
+  setTimeout(() => {
+    const message = {
+      notification: {
+        title: '⏰ 【StudyLog Pro】集中タイム終了！',
+        body: '時間になりました！素晴らしい集中力でしたね。休憩しましょう。'
+      },
+      token: token // 送られてきた最新の住所へ送る
+    };
+
+    // Firebase経由で通知を発射！
+    getMessaging().send(message)
+      .then((response) => {
+        console.log('🚀 【大成功】約束の時間になったので、スマホへ電波を発射しました！');
+      })
+      .catch((error) => {
+        console.error('❌ 通知送信エラー:', error);
+      });
+  }, durationSec * 1000); 
+});
+
+// 4. ポート3000番で、スマホからのアクセスを監視し続ける
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log('==================================================');
+  console.log(` 🌐 タイマー受付サーバーが起動しました！`);
+  console.log(` パソコンは【ポート ${PORT}】でスマホからの合図を待っています...`);
+  console.log('==================================================');
+});
