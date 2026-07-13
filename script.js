@@ -78,35 +78,45 @@ const swDisplay = document.getElementById('swDisplay');
 const statusLabel = document.getElementById('statusLabel');
 const totalDisplay = document.getElementById('totalDisplay');
 
+// 📦【新対応】エリア全体の要素を取得
+const pomoArea = document.getElementById('pomoArea');
+const customArea = document.getElementById('customArea');
+const swArea = document.getElementById('swArea');
+
 // ==========================================
-// ⚡【復活パーツ】タブ切り替えの安全な定義
+// ⚡【ID修正】HTMLのID名と完全に一致させました
 // ==========================================
-// ※ もしHTML側のID名が違っていても、後ろの「|| { ... }」のおかげで画面がフリーズしなくなります！
 const tabs = {
-    pomodoro: { btn: document.getElementById('pomoTabBtn') || document.getElementById('pomodoroTab') || { addEventListener: () => {} } },
-    custom: { btn: document.getElementById('customTabBtn') || document.getElementById('customTab') || { addEventListener: () => {} } },
-    stopwatch: { btn: document.getElementById('swTabBtn') || document.getElementById('stopwatchTab') || { addEventListener: () => {} } }
+    pomodoro: { btn: document.getElementById('tabPomodoro') },
+    custom: { btn: document.getElementById('tabCustom') },
+    stopwatch: { btn: document.getElementById('tabStopwatch') }
 };
 
 // モード（画面）を切り替える関数
 function switchMode(mode) {
     currentMode = mode;
     
-    // 一旦すべてのタイマー画面を非表示にする（HTML要素が存在する場合のみ）
-    if (pomoDisplay) pomoDisplay.style.display = 'none';
-    if (customDisplay) customDisplay.style.display = 'none';
-    if (swDisplay) swDisplay.style.display = 'none';
+    // 1. 一旦すべてのエリアに「hidden（非表示）」クラスをつける
+    if (pomoArea) pomoArea.classList.add('hidden');
+    if (customArea) customArea.classList.add('hidden');
+    if (swArea) swArea.classList.add('hidden');
     
-    // 選択されたモードの画面だけを表示する
-    if (mode === 'pomodoro' && pomoDisplay) {
-        pomoDisplay.style.display = 'block';
+    // 2. 一旦すべてのタブボタンから「active（選択中）」クラスを外す
+    if (tabs.pomodoro.btn) tabs.pomodoro.btn.classList.remove('active');
+    if (tabs.custom.btn) tabs.custom.btn.classList.remove('active');
+    if (tabs.stopwatch.btn) tabs.stopwatch.btn.classList.remove('active');
+    
+    // 3. 選択されたモードだけ「hidden」を外して「active」をつける
+    if (mode === 'pomodoro') {
+        if (pomoArea) pomoArea.classList.remove('hidden');
+        if (tabs.pomodoro.btn) tabs.pomodoro.btn.classList.add('active');
         if (statusLabel) statusLabel.textContent = isPomoFocus ? "🔥 集中時間 (25:00)" : "☕ 休憩時間 (5:00)";
-    } else if (mode === 'custom' && customDisplay) {
-        customDisplay.style.display = 'block';
-        if (statusLabel) statusLabel.textContent = "⏱️ カスタムタイマー";
-    } else if (mode === 'stopwatch' && swDisplay) {
-        swDisplay.style.display = 'block';
-        if (statusLabel) statusLabel.textContent = "⏳ ストップウォッチ";
+    } else if (mode === 'custom') {
+        if (customArea) customArea.classList.remove('hidden');
+        if (tabs.custom.btn) tabs.custom.btn.classList.add('active');
+    } else if (mode === 'stopwatch') {
+        if (swArea) swArea.classList.remove('hidden');
+        if (tabs.stopwatch.btn) tabs.stopwatch.btn.classList.add('active');
     }
 }
 
@@ -156,7 +166,7 @@ function sendNotification(title, message) {
     }
 }
 
-// 🚀【新機能】パソコンのサーバーへ、未来の通知予約を送る関数
+// 🚀 パソコンのサーバーへ、未来の通知予約を送る関数
 function reserveServerNotification(durationSec) {
     const token = document.getElementById('token-textarea').value; 
     
@@ -195,9 +205,9 @@ function reserveServerNotification(durationSec) {
 }
 
 // タブ切り替えボタンにイベントを登録
-tabs.pomodoro.btn.addEventListener('click', () => switchMode('pomodoro'));
-tabs.custom.btn.addEventListener('click', () => switchMode('custom'));
-tabs.stopwatch.btn.addEventListener('click', () => switchMode('stopwatch'));
+if (tabs.pomodoro.btn) tabs.pomodoro.btn.addEventListener('click', () => switchMode('pomodoro'));
+if (tabs.custom.btn) tabs.custom.btn.addEventListener('click', () => switchMode('custom'));
+if (tabs.stopwatch.btn) tabs.stopwatch.btn.addEventListener('click', () => switchMode('stopwatch'));
 
 // ==========================================
 // 4. 表示更新・フォーマット関数
@@ -491,16 +501,14 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.error('Service Worker 登録失敗...', err));
 }
 
-const copyTokenBtn = document.getElementById('copyTokenBtn'); // ※HTMLにコピーボタンがある場合用
-if (copyTokenBtn) {
-    copyTokenBtn.addEventListener('click', () => {
-        const textarea = document.getElementById('token-textarea');
-        if (textarea) {
-            textarea.select();
-            document.execCommand('copy');
-            alert('トークンをコピーしました！');
-        }
-    });
+// グローバルスコープの関数として設定（HTMLの onclick="copyToken()" に対応させるため）
+window.copyToken = function() {
+    const textarea = document.getElementById('token-textarea');
+    if (textarea) {
+        textarea.select();
+        document.execCommand('copy');
+        alert('トークンをコピーしました！');
+    }
 }
 
 loadTotalTime();

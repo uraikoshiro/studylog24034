@@ -70,3 +70,55 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+// 📄 send-notification.js の修正イメージ
+
+const app = express();
+app.use(express.json()); // JSONを使えるようにする設定
+
+// 📋 【新機能】動いているタイマーをトークンごとに記憶する「名簿（オブジェクト）」
+const activeTimers = {};
+
+// ⏳ ① スタートボタン（通知予約）の窓口
+app.post('/start-timer', (req, res) => {
+    const { token, durationSec } = req.body;
+
+    // 🔥【超重要】もしすでにこのスマホの古いタイマーが動いていたら、一度完全に消す（上書き対策）
+    if (activeTimers[token]) {
+        clearTimeout(activeTimers[token]);
+        delete activeTimers[token];
+        console.log(`[上書き] 古いタイマーを破棄しました: ${token.substring(0, 10)}...`);
+    }
+
+    console.log(`[予約受付] ${durationSec}秒後に通知を送ります。`);
+
+    // 🚀 setTimeout のタイマーIDを名簿（activeTimers）に保存しておく！
+    activeTimers[token] = setTimeout(() => {
+        
+        // --- ここに実際のFCM通知送信処理（admin.messaging().send...）が入る ---
+        console.log("⏰ 時間になりました！プッシュ通知を発射します！");
+        // ---------------------------------------------------------------
+
+        // 送り終わったら名簿から消す
+        delete activeTimers[token];
+    }, durationSec * 1000); // 秒をミリ秒に変換
+
+    res.json({ status: "success", message: "通知の予約が完了しました！" });
+});
+
+
+// 🛑 ② ストップボタン（キャンセル受け付け）の窓口を新設！
+app.post('/cancel-timer', (req, res) => {
+    const { token } = req.body;
+
+    // 名簿を見て、このスマホのタイマーが動いていたら…
+    if (activeTimers[token]) {
+        clearTimeout(activeTimers[token]); // ⏰ サーバー側のタイマーを強制ストップ！
+        delete activeTimers[token];        // 名簿から消去
+        console.log(`[キャンセル成功] タイマーを取り消しました: ${token.substring(0, 10)}...`);
+        res.json({ status: "success", message: "サーバー側の予約を取り消しました。" });
+    } else {
+        console.log("[キャンセル対象なし] 動いているタイマーはありませんでした。");
+        res.json({ status: "success", message: "アクティブな予約はありませんでした。" });
+    }
+});
