@@ -73,7 +73,7 @@ app.use((req, res, next) => {
 
 // 📄 send-notification.js の修正イメージ
 
-const app = express();
+
 app.use(express.json()); // JSONを使えるようにする設定
 
 // 📋 【新機能】動いているタイマーをトークンごとに記憶する「名簿（オブジェクト）」
